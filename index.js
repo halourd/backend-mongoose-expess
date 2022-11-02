@@ -19,12 +19,21 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 app.use(express.urlencoded({extended: true}))
-app.use(methodOverride('__method'));
+app.use(methodOverride('_method'));
+
+const categories = ['fruit', 'vegetable', 'dairy']
 
 //View all products
 app.get('/products', async (req, res) => {
-    const products = await Product.find({})
-    res.render('products/index', {products})
+    const {category} = req.query;
+    if(category) {
+        const products = await Product.find({category})
+        res.render('products/index', {products})
+    } else {
+        const products = await Product.find({})
+        res.render('products/index', {products})
+    }
+
 })
 
 //Form to create a new product
@@ -50,24 +59,28 @@ app.post('/products', async (req, res) => {
     res.redirect(`/products/${newProduct._id}`)
 })
 
+//delete
+
+app.delete('/products/:id', async (req, res) => {
+    const {id} = req.params;
+    const deleteProduct = await Product.findByIdAndDelete(id);
+    res.redirect('/products')
+})
+
 //Form to update a new product
 app.get('/products/:id/updateProduct', async (req, res) => {
     const {id} = req.params;
     const product = await Product.findById(id)
-    res.render('products/edit', {product});
+    res.render('products/edit', {product, categories});
 })
 
 //update a product
-app.post('/products/:id', async (req, res) => {
+app.put('/products/:id', async (req, res) => {
     const {id} = req.params;
     const product = await Product.findByIdAndUpdate(id, req.body, {runValidators: true, new:true})
     res.redirect(`/products/${product._id}`);
 
 })
-
-
-
-
 
 
 app.get('/', (req, res) => {
